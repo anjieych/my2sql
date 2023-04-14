@@ -4,7 +4,8 @@ import (
 	"sync"
 
 	my "my2sql/base"
-        "github.com/go-mysql-org/go-mysql/replication"
+
+	"github.com/go-mysql-org/go-mysql/replication"
 )
 
 func main() {
@@ -17,6 +18,9 @@ func main() {
 	var wg, wgGenSql sync.WaitGroup
 	wg.Add(1)
 	go my.ProcessBinEventStats(my.GConfCmd, &wg)
+
+	wg.Add(1)
+	go my.DoKafkaPublish(my.GConfCmd.KafkaChan, &wg, my.GConfCmd.Kafka)
 
 	if my.GConfCmd.WorkType != "stats" {
 		wg.Add(1)
@@ -32,15 +36,13 @@ func main() {
 		myParser := my.BinFileParser{}
 		myParser.Parser = replication.NewBinlogParser()
 		// donot parse mysql datetime/time column into go time structure, take it as string
-		myParser.Parser.SetParseTime(false) 
-		// sqlbuilder not support decimal type 
-		myParser.Parser.SetUseDecimal(false) 
+		myParser.Parser.SetParseTime(false)
+		// sqlbuilder not support decimal type
+		myParser.Parser.SetUseDecimal(false)
 		myParser.MyParseAllBinlogFiles(my.GConfCmd)
 	}
+
 	wgGenSql.Wait()
 	close(my.GConfCmd.SqlChan)
-	wg.Wait() 
+	wg.Wait()
 }
-
-
-

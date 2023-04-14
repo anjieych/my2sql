@@ -10,10 +10,10 @@ import (
 	"sync"
 	"time"
 
-	SQL "my2sql/sqlbuilder"
 	constvar "my2sql/constvar"
-	"github.com/siddontang/go-log/log"
+	SQL "my2sql/sqlbuilder"
 
+	"github.com/siddontang/go-log/log"
 )
 
 type ExtraSqlInfoOfPrint struct {
@@ -53,6 +53,7 @@ func GenForwardRollbackSqlFromBinEvent(i uint, cfg *ConfCmd, wg *sync.WaitGroup)
 		uniqueKey          KeyInfo
 		primaryKeyIdx      []int
 		ifRollback         bool = false
+		ifKafka            bool = cfg.WorkType == "2sql" && len(cfg.Kafka) > 0 //启用kafka
 		ifIgnorePrimary    bool = cfg.IgnorePrimaryKeyForInsert
 		currentSqlForPrint ForwardRollbackSqlOfPrint
 		posStr             string
@@ -97,7 +98,7 @@ func GenForwardRollbackSqlFromBinEvent(i uint, cfg *ConfCmd, wg *sync.WaitGroup)
 
 				}
 			}
-			
+
 			if colType == "blob" {
 				// text is stored as blob
 				if strings.Contains(strings.ToLower(tbInfo.Columns[ci].FieldType), "text") {
@@ -169,6 +170,11 @@ func GenForwardRollbackSqlFromBinEvent(i uint, cfg *ConfCmd, wg *sync.WaitGroup)
 			sqlInfo: ExtraSqlInfoOfPrint{schema: db, table: tb, binlog: ev.MyPos.Name, startpos: ev.StartPos, endpos: ev.MyPos.Pos,
 				datetime: GetDatetimeStr(int64(ev.Timestamp), int64(0), constvar.DATETIME_FORMAT_NOSPACE),
 				trxIndex: ev.TrxIndex, trxStatus: ev.TrxStatus}}
+
+		if ifKafka {
+			cfg.KafkaChan <- GenMaxwellForOneRowsEvent(ev.SqlType, db, tb, posStr, ev.Timestamp, ev.EventIdx, ev.BinEvent, colsDef, 1, false, false, false, primaryKeyIdx, cfg.KafkaTopicPrifix)
+
+		}
 
 		for {
 			//fmt.Println("in thread", i)
