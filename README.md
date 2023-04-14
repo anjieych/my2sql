@@ -72,7 +72,7 @@ transaction with affected rows greater or equal to this value is considerated as
 要解析的sql类型，可选参数insert、update、delete，默认全部解析
 ```
 
--doNotAddPrifixDb
+-do-not-add-prifixDb
 
 ```
 Prefix table name witch database name in sql,ex: insert into db1.tb1 (x1, x1) values (y1, y1)
@@ -115,6 +115,18 @@ default false, this is, use changed columns to build set part, use primary/uniqu
 2sql：生成原始sql，rollback：生成回滚sql，stats：只统计DML、事务信息
 ```
 
+### 以下为扩展功能参数：将binlog输出至kafka，消息格式为maxwell json.
+-kafka
+```
+kafka集群broker地址，以逗号连接，如：kfnode1:9092,kfnode2:9092,kfnode3:9092
+注：此参数仅在-work-type 为2sql时生效。
+```
+
+-kafkaTopicPrifix
+```
+输出到kafka的消息主题的自定义前缀。主题名格式为：{自定义前缀}_{库名}_{表名} ，即每表一个主题。
+注：此参数需与-kafka搭配生效。
+```
 
 
 
