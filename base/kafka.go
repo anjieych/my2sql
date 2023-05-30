@@ -145,20 +145,20 @@ func DoKafkaPublish(chmaxwell chan kafka.Message, wg *sync.WaitGroup, netAddrs [
 		Balancer:               &kafka.LeastBytes{},
 		Compression:            kafka.Snappy,
 		AllowAutoTopicCreation: true,
+		MaxAttempts:            5,
 	}
 
 	messages := make([]kafka.Message, 0, 32)
 	var err error
 	var chCloseed bool = false
 	var m kafka.Message
-
-	tk := time.Tick(5 * time.Second)
+	tk := time.NewTimer(5 * time.Second)
 	for {
 		select {
-		case <-tk:
+		case <-tk.C:
 			if len(messages) > 0 {
 				if err = w.WriteMessages(context.Background(), messages[0:]...); err != nil {
-					log.Fatal("failed to write messages:", err)
+					log.Println("failed to write messages:", err)
 					time.Sleep(10 * time.Second)
 				}
 				messages = nil
@@ -169,8 +169,10 @@ func DoKafkaPublish(chmaxwell chan kafka.Message, wg *sync.WaitGroup, netAddrs [
 				if err := w.Close(); err != nil {
 					log.Fatal("failed to close writer:", err)
 				}
+				tk.Stop()
 				break
 			}
+			tk.Reset(5 * time.Second)
 		case m, chCloseed = <-chmaxwell:
 			messages = append(messages, m)
 		}
