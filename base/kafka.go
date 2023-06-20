@@ -160,6 +160,15 @@ func DoKafkaPublish(chmaxwell chan kafka.Message, wg *sync.WaitGroup, netAddrs [
 				if err = w.WriteMessages(context.Background(), messages[0:]...); err != nil {
 					log.Println("failed to write messages:", err)
 					time.Sleep(10 * time.Second)
+					w = &kafka.Writer{
+						Addr: kafka.TCP(netAddrs...),
+						// NOTE: When Topic is not defined here, each Message must define it instead.
+						Balancer:               &kafka.LeastBytes{},
+						Compression:            kafka.Snappy,
+						AllowAutoTopicCreation: true,
+						MaxAttempts:            5,
+					}
+					continue
 				}
 				messages = nil
 				messages = make([]kafka.Message, 0, 32)
