@@ -163,7 +163,7 @@ func GenForwardRollbackSqlFromBinEvent(i uint, cfg *ConfCmd, wg *sync.WaitGroup)
 				sqlArr = GenUpdateSqlsForOneRowsEvent(posStr, colsTypeNameFromMysql, colsTypeName, ev.BinEvent, colsDef, uniqueKeyIdx, cfg.FullColumns, false, cfg.SqlTblPrefixDb)
 			}
 		} else {
-			fmt.Println("unsupported query type %s to generate 2sql|rollback sql, it should one of insert|update|delete. %s", ev.SqlType, ev.MyPos.String())
+			fmt.Printf("unsupported query type %s to generate 2sql|rollback sql, it should one of insert|update|delete. %s\r\n", ev.SqlType, ev.MyPos.String())
 			continue
 		}
 		currentSqlForPrint = ForwardRollbackSqlOfPrint{sqls: sqlArr,
